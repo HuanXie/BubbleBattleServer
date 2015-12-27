@@ -3,6 +3,7 @@ package com.example.huan.bubblebattle;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
@@ -30,7 +31,18 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.example.huan.bubblebattle.Networking.WebSocketUtility;
+
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.drafts.Draft_17;
+import org.java_websocket.handshake.ServerHandshake;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,35 +51,33 @@ import static android.Manifest.permission.READ_CONTACTS;
 /**
  * A login screen that offers login via email/password.
  */
-public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<Cursor> {
+public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<Cursor>, MessageHandler {
 
     /**
      * Id to identity READ_CONTACTS permission request.
      */
     private static final int REQUEST_READ_CONTACTS = 0;
 
-    /**
-     * A dummy authentication store containing known user names and passwords.
-     * TODO: remove after connecting to a real authentication system.
-     */
-    private static final String[] DUMMY_CREDENTIALS = new String[]{
-            "foo@example.com:hello", "bar@example.com:world"
-    };
     public static final String USER_NAME = "userName";
+    private static final String logCat = LoginActivity.class.toString();
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private UserLoginTask mAuthTask = null;
+    private boolean isLogin = true;
 
     // UI references.
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+    //private WebSocketClient mWebSocketClient;
+    private boolean debug = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        WebSocketUtility.setMessageHandler(this); //set the handler so that this activity handleMessage() will be called
         setContentView(R.layout.activity_login);
         // Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
@@ -78,24 +88,34 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
                 if (id == R.id.login || id == EditorInfo.IME_NULL) {
-                    attemptLogin();
+                    isLogin = true;
+                    attemptLoginOrRegister();
                     return true;
                 }
                 return false;
             }
         });
 
-        Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
-        mEmailSignInButton.setOnClickListener(new OnClickListener() {
+        Button loginButton = (Button) findViewById(R.id.email_sign_in_button);
+        loginButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                attemptLogin();
+                isLogin = true;
+                attemptLoginOrRegister();
             }
         });
 
+        Button registerButton = (Button) findViewById(R.id.email_register_button);
+        registerButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isLogin = false;
+                attemptLoginOrRegister();
+            }
+        });
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
-        Log.d("Stupid", "OnCreate()");
+        Log.d(logCat, "OnCreate()");
     }
 
     private void populateAutoComplete() {
@@ -147,10 +167,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * If there are form errors (invalid email, missing fields, etc.), the
      * errors are presented and no actual login attempt is made.
      */
-    private void attemptLogin() {
-        if (mAuthTask != null) {
-            return;
-        }
+    private void attemptLoginOrRegister() {
 
         // Reset errors.
         mEmailView.setError(null);
@@ -186,27 +203,122 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // form field with an error.
             focusView.requestFocus();
         } else {
-            // Show a progress spinner, and kick off a background task to
-            // perform the user login attempt.
+            // the form of input is valid
             showProgress(true);
-            mAuthTask = new UserLoginTask(email, password);
-            mAuthTask.execute((Void) null);
 
-            Intent intent = new Intent(this, PersonalActivity.class);
-            intent.putExtra(USER_NAME, "johnny");
-            startActivity(intent);
-            Log.d("Stupid", "Jumping to personal activity");
+            if (debug) {
+                goToPersonalActivity();
+            } else {
+              //initWebSocket();
+              loginOrRegisterToServer(email, password);
+            }
         }
     }
 
+    private void loginOrRegisterToServer(String email, String password) {
+        JSONObject loginReq = new JSONObject();
+        try {
+            if (isLogin) {
+                loginReq.put("action", "login");
+            } else {
+                loginReq.put("action", "register");
+            }
+            loginReq.put("email", email);
+            loginReq.put("password", password);
+            //boolean connected = mWebSocketClient.connectBlocking();
+            WebSocketClient client = WebSocketUtility.getClient();
+            boolean connected = client.connectBlocking();
+            if (connected) {
+                client.send(loginReq.toString());
+            } else {
+                Log.e(logCat, "websocket connection failed");
+            }
+        } catch (JSONException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /*
+    private void initWebSocket() {
+        if (mWebSocketClient == null) {
+            URI uri;
+            final String address = "ws://192.168.1.72:8080/BubbleBattle/gamelobby";
+            try {
+                uri = new URI(address);
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+                return;
+            }
+
+            mWebSocketClient = new WebSocketClient(uri, new Draft_17()) {
+                @Override
+                public void onOpen(ServerHandshake serverHandshake) {
+                    Log.d(logCat, "websocket opened");
+                }
+
+                @Override
+                public void onMessage(final String s) {
+                    final String message = s;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            showMessageDialog(s);
+                        }
+                    });
+                    handleMessage(s);
+                }
+
+                @Override
+                public void onClose(int i, String s, boolean b) {
+                    Log.d(logCat, "Closed " + s);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    Log.e(logCat, "Error " + e.getMessage());
+                }
+            };
+        }
+    }*/
+
+    @Override
+    public void handleMessage(String s) {
+        Log.d(logCat, "handling message " + s);
+        try {
+            JSONObject json = new JSONObject(s);
+            String status = json.getString("status");
+            if (status.equals("success")) {
+                //login successful
+                goToPersonalActivity();
+            } else {
+                //stay in this activity and clear the email/password text boxes
+                showProgress(false);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void showMessageDialog(String msg) {
+        Context context = getApplicationContext();
+        int duration = Toast.LENGTH_SHORT;
+        Toast toast = Toast.makeText(context, msg, duration);
+        toast.show();
+    }
+
+    private void goToPersonalActivity() {
+        Context context = getApplicationContext();
+        Intent intent = new Intent(context, PersonalActivity.class);
+        startActivity(intent);
+        Log.d(logCat, "Jumping to personal activity");
+    }
+
     private boolean isEmailValid(String email) {
-        //TODO: Replace this with your own logic
         return email.contains("@");
     }
 
     private boolean isPasswordValid(String password) {
-        //TODO: Replace this with your own logic
-        return password.length() > 4;
+        return password.length() > 2;
     }
 
     /**
@@ -322,14 +434,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
                 return false;
-            }
-
-            for (String credential : DUMMY_CREDENTIALS) {
-                String[] pieces = credential.split(":");
-                if (pieces[0].equals(mEmail)) {
-                    // Account exists, return true if the password matches.
-                    return pieces[1].equals(mPassword);
-                }
             }
 
             // TODO: register the new account here.

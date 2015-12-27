@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -8,9 +8,108 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
+    android:layout_gravity="center"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.example.huan.bubblebattle.PersonalActivity"
     tools:showIn="@layout/app_bar_personal"
-    android:id="@+id/content">
+    android:id="@+id/content"
+    android:columnCount="4"
+    android:orientation="horizontal">
 
-</RelativeLayout>
+    <ImageButton
+        android:id="@+id/table0"
+        android:layout_column="0"
+        android:scaleType="fitXY"
+        android:src="@mipmap/green_bubble" />
+
+    <ImageButton
+        android:id="@+id/table1"
+        android:layout_column="1"
+        android:scaleType="fitXY"
+        android:src="@mipmap/green_bubble" />
+
+    <ImageButton
+        android:id="@+id/table2"
+        android:layout_column="2"
+        android:scaleType="fitXY"
+        android:src="@mipmap/green_bubble" />
+
+    <ImageButton
+        android:id="@+id/table3"
+        android:layout_column="3"
+        android:scaleType="fitXY"
+        android:src="@mipmap/green_bubble" />
+
+    <ImageButton
+        android:id="@+id/table4"
+        android:layout_column="0"
+        android:scaleType="fitXY"
+        android:src="@mipmap/green_bubble" />
+
+    <ImageButton
+        android:id="@+id/table5"
+        android:layout_column="1"
+        android:scaleType="fitXY"
+        android:src="@mipmap/green_bubble" />
+
+    <ImageButton
+        android:id="@+id/table6"
+        android:layout_column="2"
+        android:scaleType="fitXY"
+        android:src="@mipmap/green_bubble" />
+
+    <ImageButton
+        android:id="@+id/table7"
+        android:layout_column="3"
+        android:scaleType="fitXY"
+        android:src="@mipmap/green_bubble" />
+
+    <ImageButton
+        android:id="@+id/table8"
+        android:layout_column="0"
+        android:scaleType="fitXY"
+        android:src="@mipmap/green_bubble" />
+
+    <ImageButton
+        android:id="@+id/table9"
+        android:layout_column="1"
+        android:scaleType="fitXY"
+        android:src="@mipmap/green_bubble" />
+
+    <ImageButton
+        android:id="@+id/table10"
+        android:layout_column="2"
+        android:scaleType="fitXY"
+        android:src="@mipmap/green_bubble" />
+
+    <ImageButton
+        android:id="@+id/table11"
+        android:layout_column="3"
+        android:scaleType="fitXY"
+        android:src="@mipmap/green_bubble" />
+
+    <ImageButton
+        android:id="@+id/table12"
+        android:layout_column="0"
+        android:scaleType="fitXY"
+        android:src="@mipmap/green_bubble" />
+
+    <ImageButton
+        android:id="@+id/table13"
+        android:layout_column="1"
+        android:scaleType="fitXY"
+        android:src="@mipmap/green_bubble" />
+
+    <ImageButton
+        android:id="@+id/table14"
+        android:layout_column="2"
+        android:scaleType="fitXY"
+        android:src="@mipmap/green_bubble" />
+
+    <ImageButton
+        android:id="@+id/table15"
+        android:layout_column="3"
+        android:scaleType="fitXY"
+        android:src="@mipmap/green_bubble" />
+</GridLayout>
+
